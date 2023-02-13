@@ -125,7 +125,7 @@ def gen_addons_table(commit, readme_path, addons_dir):
     rows_unported = []
     for addon_path, unported in addon_paths:
         for manifest_file in MANIFESTS:
-            manifest_path = os.path.join(addon_path, manifest_file)
+            manifest_path = os.path.join(addon_paths, addon_path, manifest_file)
             has_manifest = os.path.isfile(manifest_path)
             if has_manifest:
                 break
