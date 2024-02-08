@@ -137,31 +137,59 @@ def make_repo_badge(org_name, repo_name, branch, addon_name):
     )
 
 
+def get_substring_after_term(input_string, term):
+    """
+    Nivels added function, gets substring after a search term in the string.
+    """
+    parts = input_string.rsplit(term, 1)
+    if len(parts) > 1:
+        return parts[1]
+    else:
+        return ""
+
+
+def make_repo_badge_for_custom_addon_folder(org_name, repo_name, branch, addon_name, addon_dir):
+    """
+    Nivels added function, gets custom addon path in the repo, and appends it to the badge link.
+    """
+    badge_repo_name = repo_name.replace('-', '--')
+    local_addon_folder = get_substring_after_term(addon_dir, repo_name).strip('/')
+    return (
+        'https://img.shields.io/badge/github-{org_name}%2F{badge_repo_name}'
+        '-lightgray.png?logo=github'.format(**locals()),
+        'https://github.com/{org_name}/{repo_name}/tree/'
+        '{branch}/{local_addon_folder}'.format(**locals()),
+        '{org_name}/{repo_name}'.format(**locals()),
+    )
+
+
 def generate_fragment(org_name, repo_name, branch, addon_name, file):
     fragment_lines = file.readlines()
     if not fragment_lines:
         return False
 
-    # Replace relative path by absolute path for figures
-    image_path_re = re.compile(
-        r'.*\s*\.\..* (figure|image)::\s+(?P<path>.*?)\s*$')
-    module_url = "https://raw.githubusercontent.com/{org_name}/{repo_name}"\
-        "/{branch}/{addon_name}/".format(**locals())
-    for index, fragment_line in enumerate(fragment_lines):
-        mo = image_path_re.match(fragment_line)
-        if not mo:
-            continue
-        path = mo.group('path')
+    # Commented out below code to keep relative paths for figures and images because of Nivel's unique path for addons in github repos
 
-        if path.startswith('http'):
-            # It is already an absolute path
-            continue
-        else:
-            # remove '../' if exists that make the fragment working
-            # on github interface, in the 'readme' subfolder
-            relative_path = path.replace('../', '')
-            fragment_lines[index] = fragment_line.replace(
-                path, urljoin(module_url, relative_path))
+    # # Replace relative path by absolute path for figures
+    # image_path_re = re.compile(
+    #     r'.*\s*\.\..* (figure|image)::\s+(?P<path>.*?)\s*$')
+    # module_url = "https://raw.githubusercontent.com/{org_name}/{repo_name}"\
+    #     "/{branch}/{addon_name}/".format(**locals())
+    # for index, fragment_line in enumerate(fragment_lines):
+    #     mo = image_path_re.match(fragment_line)
+    #     if not mo:
+    #         continue
+    #     path = mo.group('path')
+
+    #     if path.startswith('http'):
+    #         # It is already an absolute path
+    #         continue
+    #     else:
+    #         # remove '../' if exists that make the fragment working
+    #         # on github interface, in the 'readme' subfolder
+    #         relative_path = path.replace('../', '')
+    #         fragment_lines[index] = fragment_line.replace(
+    #             path, urljoin(module_url, relative_path))
     fragment = ''.join(fragment_lines)
 
     # ensure that there is a new empty line at the end of the fragment
@@ -190,7 +218,8 @@ def gen_one_addon_readme(
     license = manifest.get('license')
     if license in LICENSE_BADGES:
         badges.append(LICENSE_BADGES[license])
-    badges.append(make_repo_badge(org_name, repo_name, branch, addon_name))
+    # Nivels Change - call function for getting the addon path in a custom folder
+    badges.append(make_repo_badge_for_custom_addon_folder(org_name, repo_name, branch, addon_name, addon_dir))
     if org_name == 'OCA':
         badges.append(make_weblate_badge(repo_name, branch, addon_name))
     if org_name == 'OCA':
