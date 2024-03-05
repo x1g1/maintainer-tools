@@ -154,6 +154,7 @@ def make_repo_badge_for_custom_addon_folder(org_name, repo_name, branch, addon_n
     """
     badge_repo_name = repo_name.replace('-', '--')
     local_addon_folder = get_substring_after_term(addon_dir, repo_name).strip('/')
+    print(local_addon_folder)
     return (
         'https://img.shields.io/badge/github-{org_name}%2F{badge_repo_name}'
         '-lightgray.png?logo=github'.format(**locals()),
@@ -199,16 +200,19 @@ def generate_fragment(org_name, repo_name, branch, addon_name, file, doc_mode=Fa
             continue
         path = mo.group('path')
         relative_path = False
-
+        if path.startswith('http') or path.startswith('https'):
+            # It is already an absolute path
+            continue
         if doc_mode:
             if './' in path[0:2]:
                 relative_path = path.replace('./', '../../../odoo_addons/nivels_addons/')
             if '../' in path[0:2]:
                 relative_path = path.replace('../', '../../../odoo_addons/nivels_addons/')
-
-            if relative_path:
-                fragment_lines[index] = fragment_line.replace(
-                    path, urljoin(module_url, relative_path))
+        else:
+            relative_path = path
+        if relative_path:
+            fragment_lines[index] = fragment_line.replace(
+                path, urljoin(module_url, relative_path))
 
     fragment = ''.join(fragment_lines)
 
@@ -255,7 +259,7 @@ def gen_one_addon_readme(
     ]
     # generate
     template_filename = \
-        os.path.join(os.path.dirname(__file__), 'gen_addon_readme.template')
+        os.path.join(os.path.dirname(__file__), 'nivels_gen_addon_readme.template')
     readme_filename = \
         os.path.join(addon_dir, 'README.rst')
     with open(template_filename, 'r', encoding='utf8') as tf:
