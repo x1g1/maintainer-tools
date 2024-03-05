@@ -28,7 +28,8 @@ setuptools.setup(
         # We need to pin docutils version, see
         # https://github.com/OCA/maintainer-tools/issues/423
         # Consider carefully before changing this.
-        'docutils==0.16.*',
+        #'docutils==0.16.*',
+        'docutils==0.20.1',
         'ERPpeek',
         'github3.py>=1',
         'inflection',

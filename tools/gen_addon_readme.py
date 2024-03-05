@@ -163,7 +163,7 @@ def make_repo_badge_for_custom_addon_folder(org_name, repo_name, branch, addon_n
     )
 
 
-def generate_fragment(org_name, repo_name, branch, addon_name, file):
+def generate_fragment(org_name, repo_name, branch, addon_name, file, doc_mode=False):
     fragment_lines = file.readlines()
     if not fragment_lines:
         return False
@@ -190,6 +190,26 @@ def generate_fragment(org_name, repo_name, branch, addon_name, file):
     #         relative_path = path.replace('../', '')
     #         fragment_lines[index] = fragment_line.replace(
     #             path, urljoin(module_url, relative_path))
+
+    image_path_re = re.compile(r'.*\s*\.\..* (figure|image)::\s+(?P<path>.*?)\s*$')
+    module_url = ''
+    for index, fragment_line in enumerate(fragment_lines):
+        mo = image_path_re.match(fragment_line)
+        if not mo:
+            continue
+        path = mo.group('path')
+        relative_path = False
+
+        if doc_mode:
+            if './' in path[0:2]:
+                relative_path = path.replace('./', '../../../odoo_addons/nivels_addons/')
+            if '../' in path[0:2]:
+                relative_path = path.replace('../', '../../../odoo_addons/nivels_addons/')
+
+            if relative_path:
+                fragment_lines[index] = fragment_line.replace(
+                    path, urljoin(module_url, relative_path))
+
     fragment = ''.join(fragment_lines)
 
     # ensure that there is a new empty line at the end of the fragment
@@ -199,7 +219,7 @@ def generate_fragment(org_name, repo_name, branch, addon_name, file):
 
 
 def gen_one_addon_readme(
-        org_name, repo_name, branch, addon_name, addon_dir, manifest):
+        org_name, repo_name, branch, addon_name, addon_dir, manifest, doc_mode=False):
     fragments = {}
     for fragment_name in FRAGMENTS:
         fragment_filename = os.path.join(
@@ -208,7 +228,7 @@ def gen_one_addon_readme(
         if os.path.exists(fragment_filename):
             with open(fragment_filename, 'r', encoding='utf8') as f:
                 fragment = generate_fragment(
-                    org_name, repo_name, branch, addon_name, f)
+                    org_name, repo_name, branch, addon_name, f, doc_mode=doc_mode)
                 if fragment:
                     fragments[fragment_name] = fragment
     badges = []
@@ -314,8 +334,10 @@ def gen_one_addon_index(readme_filename):
               help="git commit changes to README.rst, if any.")
 @click.option('--gen-html/--no-gen-html', default=True,
               help="Generate index html file.")
+@click.option('--doc-mode/--no-doc-mode', default=False,
+              help="Generate Readme.rst html file.")
 def gen_addon_readme(
-        org_name, repo_name, branch, addon_dirs, addons_dir, commit, gen_html):
+        org_name, repo_name, branch, addon_dirs, addons_dir, commit, gen_html, doc_mode):
     """ Generate README.rst from fragments.
 
     Do nothing if readme/DESCRIPTION.rst is absent, otherwise overwrite
@@ -338,7 +360,7 @@ def gen_addon_readme(
                 os.path.join(addon_dir, FRAGMENTS_DIR, 'DESCRIPTION.rst')):
             continue
         readme_filename = gen_one_addon_readme(
-            org_name, repo_name, branch, addon_name, addon_dir, manifest)
+            org_name, repo_name, branch, addon_name, addon_dir, manifest, doc_mode=doc_mode)
         check_rst(readme_filename)
         readme_filenames.append(readme_filename)
         if gen_html:
